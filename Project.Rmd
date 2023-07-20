@@ -1,0 +1,43 @@
+---
+title: "R Notebook"
+output: html_notebook
+---
+library(lattice)
+library(ggplot2)
+library(caret)
+library(kernlab)
+library(rattle)
+library(corrplot)
+set.seed(1234)
+traincsv <- read.csv("pml-training.csv")
+testcsv <- read.csv("pml-testing.csv")
+
+dim(traincsv)
+traincsv <- traincsv[,colMeans(is.na(traincsv)) < .9] 
+traincsv <- traincsv[,-c(1:7)] 
+
+nvz <- nearZeroVar(traincsv)
+traincsv <- traincsv[,-nvz]
+dim(traincsv)
+
+
+control <- trainControl(method="cv", number=3, verboseIter=F)
+
+mod_trees <- train(classe~., data=train, method="rpart", trControl = control, tuneLength = 5)
+# fancyRpartPlot(mod_trees$finalModel)
+
+pred_trees <- predict(mod_trees, valid)
+cmtrees <- confusionMatrix(pred_trees, factor(valid$classe))
+cmtrees
+
+mod_rf <- train(classe~., data=train, method="rf", trControl = control, tuneLength = 5)
+
+pred_rf <- predict(mod_rf, valid)
+cmrf <- confusionMatrix(pred_rf, factor(valid$classe))
+cmrf
+
+mod_gbm <- train(classe~., data=train, method="gbm", trControl = control, tuneLength = 5, verbose = F)
+
+pred_gbm <- predict(mod_gbm, valid)
+cmgbm <- confusionMatrix(pred_gbm, factor(valid$classe))
+cmgbm
